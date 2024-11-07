@@ -19,7 +19,8 @@ bcpkixjdk15to18 = "1.79"
 protobuf = '0.9.4'
 netty-http3 = "0.0.28.Final"
 
-micronaut-gradle-plugin = "4.4.3"
+managed-apache-http-core5 = "5.2.5"
+micronaut-gradle-plugin = "4.4.4"
 micronaut-groovy = "4.4.0"
 micronaut-kotlin = "4.4.0"
 micronaut-micrometer = "5.9.1"
@@ -69,6 +70,7 @@ commons-lang3 = { module = 'org.apache.commons:commons-lang3', version.ref = 'co
 oci-bom = { module = "com.oracle.oci.sdk:oci-java-sdk-bom", version.ref = "oci" }
 oci-common = { module = 'com.oracle.oci.sdk:oci-java-sdk-common', version.ref = "oci" }
 oci-common-httpclient = { module = 'com.oracle.oci.sdk:oci-java-sdk-common-httpclient', version.ref = "oci" }
+oci-common-httpclient-jersey3 = { module = 'com.oracle.oci.sdk:oci-java-sdk-common-httpclient-jersey3', version.ref = "oci" }
 oci-objectstorage = { module = 'com.oracle.oci.sdk:oci-java-sdk-objectstorage', version.ref = "oci" }
 oci-oke-workload-identity = { module = 'com.oracle.oci.sdk:oci-java-sdk-addons-oke-workload-identity', version.ref = "oci" }
 oci-graalvm = { module = 'com.oracle.oci.sdk:oci-java-sdk-addons-graalvm', version.ref = "oci" }
@@ -78,6 +80,7 @@ oracle-security-cert = { module = 'com.oracle.database.security:osdt_cert' }
 oracle-security-core = { module = 'com.oracle.database.security:osdt_core' }
 oracle-xml-xdb = { module = 'com.oracle.database.xml:xdb' }
 netty-incubator-codec-http3 = { module = "io.netty.incubator:netty-incubator-codec-http3", version.ref = "netty-http3" }
+apache-http-core5 = { module = 'org.apache.httpcomponents.core5:httpcore5', version.ref = 'managed-apache-http-core5' }
 bcpkixjdk15to18 = { module = "org.bouncycastle:bcpkix-jdk15to18", version.ref = "bcpkixjdk15to18"}
 
 #plugins

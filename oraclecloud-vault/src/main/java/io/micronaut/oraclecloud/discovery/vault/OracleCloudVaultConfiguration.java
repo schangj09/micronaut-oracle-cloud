@@ -15,6 +15,7 @@
  */
 package io.micronaut.oraclecloud.discovery.vault;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
@@ -25,10 +26,10 @@ import io.micronaut.discovery.config.ConfigDiscoveryConfiguration;
 import io.micronaut.oraclecloud.core.OracleCloudCoreFactory;
 
 /**
- *  OracleCloudVault Client.
+ * OracleCloudVault Client.
  *
- *  @author toddsharp
- *  @since 1.4.0
+ * @author toddsharp
+ * @since 1.4.0
  */
 @ConfigurationProperties(OracleCloudVaultConfiguration.PREFIX)
 @BootstrapContextCompatible
@@ -67,7 +68,7 @@ public class OracleCloudVaultConfiguration {
         }
     }
 
-       /**
+    /**
      * An Oracle Cloud Vault.
      */
     @EachProperty(value = "vaults", list = true)
@@ -75,6 +76,8 @@ public class OracleCloudVaultConfiguration {
     public static class OracleCloudVault {
         private String ocid;
         private String compartmentOcid;
+        private String[] includes = new String[0];
+        private String[] excludes = new String[0];
 
         /**
          * The OCID of the vault that contains secrets that will be retrieved, decoded and set as config vars.
@@ -112,12 +115,54 @@ public class OracleCloudVaultConfiguration {
             this.compartmentOcid = compartmentOcid;
         }
 
+        /**
+         * Gets the includes array.
+         *
+         * @return the includes array
+         */
+        public String[] getIncludes() {
+            return includes;
+        }
+
+        /**
+         * Sets the includes array of regex patterns to match on secret names. These will be
+         * included unless there is a match on an exclude pattern.
+         * If not provided, then all secrets are included.
+         *
+         * @param includes the includes array
+         */
+        public void setIncludes(String[] includes) {
+            this.includes = includes;
+        }
+
+        /**
+         * Gets the excludes array.
+         *
+         * @return the excludes array
+         */
+        public String[] getExcludes() {
+            return excludes;
+        }
+
+        /**
+         * Sets the excludes array of regex patterns to match on secret names. These will always be
+         * excluded, even if there is a match on include pattern.
+         * If not provided, then no secrets are explicitly excluded.
+         *
+         * @param excludes the excludes array
+         */
+        public void setExcludes(String[] excludes) {
+            this.excludes = excludes;
+        }
+
         @Override
         public String toString() {
             return "OracleCloudVault{" +
-                    "ocid='" + ocid + '\'' +
-                    ", compartmentOcid='" + compartmentOcid + '\'' +
-                    '}';
+                "ocid='" + ocid + '\'' +
+                ", compartmentOcid='" + compartmentOcid + '\'' +
+                ", includes=" + Arrays.toString(includes) +
+                ", excludes=" + Arrays.toString(excludes) +
+                '}';
         }
     }
 

@@ -20,7 +20,10 @@ class OracleCloudVaultConfigurationSpec extends Specification {
                 'oci.vault.config.enabled'       : true,
                 'oci.vault.vaults'               : [
                         ['ocid'            : 'ocid1.vault.oc1.phx....',
-                         'compartment-ocid': 'ocid1.compartment.oc1....']
+                         'compartment-ocid': 'ocid1.compartment.oc1....',
+                         'includes'        : ['mmm-.*', 'yyy-version1'],
+                         'excludes'        : ['zzz-.*', 'yyy-version2']
+                        ]
                 ]])
         OracleCloudVaultConfiguration config = ctx.getBean(OracleCloudVaultConfiguration)
 
@@ -28,6 +31,10 @@ class OracleCloudVaultConfigurationSpec extends Specification {
         1 == config.vaults.size()
         "ocid1.vault.oc1.phx...." == config.vaults[0].ocid
         "ocid1.compartment.oc1...." == config.vaults[0].compartmentOcid
+        "mmm-.*" == config.vaults[0].includes[0]
+        "yyy-version1" == config.vaults[0].includes[1]
+        "zzz-.*" == config.vaults[0].excludes[0]
+        "yyy-version2" == config.vaults[0].excludes[1]
         config.discoveryConfiguration.enabled
 
         cleanup:

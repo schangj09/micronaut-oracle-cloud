@@ -42,6 +42,7 @@ import com.oracle.bmc.vault.responses.ScheduleSecretDeletionResponse
 import com.oracle.bmc.vault.responses.ScheduleSecretVersionDeletionResponse
 import com.oracle.bmc.vault.responses.UpdateSecretResponse
 import com.oracle.bmc.workrequests.WorkRequest
+import groovy.transform.Canonical
 
 /**
  * Mock provider for a Vaults and Secrets client. A list of secrets are provided and the
@@ -110,6 +111,7 @@ class MockVaultSecrets {
                 ).build()
     }
 
+    @Canonical
     static class Secret {
         String name
         String id

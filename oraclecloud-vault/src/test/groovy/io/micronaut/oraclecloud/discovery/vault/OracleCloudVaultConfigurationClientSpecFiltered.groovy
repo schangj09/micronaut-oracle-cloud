@@ -68,8 +68,7 @@ class OracleCloudVaultConfigurationClientSpecFiltered extends Specification {
         then:
         assert !propertySource.isEmpty()
         def expectedSecrets = [
-                new MockVaultSecrets.Secret(name: "yyy-v2", id: "y2", value: "yv2"),
-                new MockVaultSecrets.Secret(name: "mmm-v1", id: "m1", value: "mv1"),
+                new MockVaultSecrets.Secret(name: "yyy-v1", id: "y1", value: "yv1"),
                 new MockVaultSecrets.Secret(name: "mmm-v2", id: "m2", value: "mv2"),
         ]
         secretsList.forEach { secret ->
@@ -91,7 +90,7 @@ class OracleCloudVaultConfigurationClientSpecFiltered extends Specification {
                     'oci.vault.vaults'               : [
                             ['ocid'            : VAULT_OCID,
                              'compartment-ocid': COMPARTMENT_OCID,
-                             'includes'        : ['mmm-*', 'yyy-v1'],
+                             'includes'        : ['mmm-.*', 'yyy-v1'],
                              'excludes'        : ['mmm-v1']]
                     ]])
         }

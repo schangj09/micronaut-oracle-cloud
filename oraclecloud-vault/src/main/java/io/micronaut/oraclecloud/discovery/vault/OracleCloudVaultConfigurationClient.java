@@ -29,6 +29,7 @@ import io.micronaut.context.env.Environment;
 import io.micronaut.context.env.PropertySource;
 import io.micronaut.core.annotation.Nullable;
 import io.micronaut.discovery.config.ConfigurationClient;
+import io.micronaut.retry.annotation.Retryable;
 import io.micronaut.scheduling.TaskExecutors;
 import jakarta.inject.Named;
 import jakarta.inject.Singleton;
@@ -88,6 +89,19 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
         this.vaultsClient = vaultsClient;
     }
 
+    /**
+     * Retrieves a publisher of property sources from the Oracle Cloud Vault configuration.<br/>
+     * <br/>
+     * This method iterates over the list of vaults defined in the Oracle Cloud Vault configuration,
+     * retrieves the secrets from each vault using the Oracle Cloud Vault API, filters the secrets
+     * based on the include and exclude patterns defined in the vault configuration, and returns a
+     * publisher of property sources containing the filtered secrets.<br/>
+     * <br/>
+     * If the discovery configuration is disabled, an empty publisher is returned.
+     *
+     * @param environment the Micronaut environment
+     * @return a publisher of property sources containing the filtered secrets
+     */
     @Override
     public Publisher<PropertySource> getPropertySources(Environment environment) {
         if (!oracleCloudVaultClientConfiguration.getDiscoveryConfiguration().isEnabled()) {
@@ -99,52 +113,47 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
 
         Map<String, Object> secrets = new HashMap<>();
 
-        for (OracleCloudVaultConfiguration.OracleCloudVault vault : oracleCloudVaultClientConfiguration.getVaults()) {
+        oracleCloudVaultClientConfiguration.getVaults().forEach(vault -> {
             int retrieved = 0;
 
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("Retrieving secrets from Oracle Cloud Vault with OCID: {}", vault.getOcid());
-            }
+            LOG.info("Retrieving secrets from Oracle Cloud Vault with OCID: {}", vault.getOcid());
+
             List<ListSecretsResponse> responses = new ArrayList<>();
             ListSecretsRequest listSecretsRequest = buildRequest(
-                    vault.getOcid(),
-                    vault.getCompartmentOcid(),
-                    null
+                vault.getOcid(),
+                vault.getCompartmentOcid(),
+                null
             );
             ListSecretsResponse listSecretsResponse = vaultsClient.listSecrets(listSecretsRequest);
             responses.add(listSecretsResponse);
 
             while (listSecretsResponse.getOpcNextPage() != null) {
                 listSecretsRequest = buildRequest(
-                        vault.getOcid(),
-                        vault.getCompartmentOcid(),
-                        listSecretsResponse.getOpcNextPage()
+                    vault.getOcid(),
+                    vault.getCompartmentOcid(),
+                    listSecretsResponse.getOpcNextPage()
                 );
                 listSecretsResponse = vaultsClient.listSecrets(listSecretsRequest);
                 responses.add(listSecretsResponse);
             }
 
-            for (ListSecretsResponse response : responses) {
-                retrieved += response.getItems().size();
-                response.getItems().forEach(summary -> {
-                    byte[] secretValue = getSecretValue(summary.getId());
-                    secrets.put(
-                            summary.getSecretName(),
-                            secretValue
-                    );
+            // Filter the responses based on the configured includes and excludes
+            List<SecretSummary> summaries = getFilteredListOfItems(responses, vault);
 
-                    if (LOG.isTraceEnabled()) {
-                        LOG.trace("Retrieved secret: {}", summary.getSecretName());
-                    }
-                });
-            }
-            if (LOG.isDebugEnabled()) {
-                LOG.debug("{} secrets where retrieved from Oracle Cloud Vault with OCID: {}", retrieved, vault.getOcid());
-            }
-        }
+            // Iterate  the summaries list and store the decoded value for each secret
+            summaries.forEach(summary -> {
+                byte[] secretValue = getSecretValue(summary.getId());
+                secrets.put(summary.getSecretName(), secretValue);
+
+                if (LOG.isTraceEnabled()) {
+                    LOG.trace("Retrieved secret: {}", summary.getSecretName());
+                }
+            });
+            LOG.info("{} secrets were retrieved from Oracle Cloud Vault with OCID: {}", retrieved, vault.getOcid());
+        });
 
         Flux<PropertySource> propertySourceFlowable = Flux.just(
-                PropertySource.of(secrets)
+            PropertySource.of(secrets)
         );
 
         if (scheduler != null) {
@@ -154,30 +163,84 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
         return Flux.merge(propertySources);
     }
 
+    /**
+     * Filters the list of SecretSummaries based on the include and exclude patterns defined in the OracleCloudVault object.
+     *
+     * @param responses the list of ListSecretsResponses containing the SecretSummaries to filter
+     * @param vault      the OracleCloudVault object defining the include and exclude patterns
+     * @return a list of filtered SecretSummaries matching the specified criteria
+     */
+    private List<SecretSummary> getFilteredListOfItems(List<ListSecretsResponse> responses, OracleCloudVaultConfiguration.OracleCloudVault vault) {
+        List<SecretSummary> filteredList = new ArrayList<>();
+        responses.forEach(response -> response.getItems().forEach(item -> {
+            boolean matchesIncludePattern = false;
+            boolean matchesExcludePattern = false;
+
+            for (String include : vault.getIncludes()) {
+                if (item.getSecretName().matches(include)) {
+                    matchesIncludePattern = true;
+                    break;
+                }
+            }
+
+            for (String exclude : vault.getExcludes()) {
+                if (item.getSecretName().matches(exclude)) {
+                    matchesExcludePattern = true;
+                    break;
+                }
+            }
+
+            if ((vault.getIncludes().length == 0 || matchesIncludePattern) && !matchesExcludePattern) {
+                filteredList.add(item);
+            }
+        }));
+        return filteredList;
+    }
+
+    /**
+     * Builds a ListSecretsRequest instance with the specified parameters.
+     *
+     * @param vaultId       the ID of the vault to retrieve secrets from
+     * @param compartmentId the ID of the compartment where the vault resides
+     * @param page          the pagination token to use for retrieving the next page of results, or null to start from the first page
+     * @return a ListSecretsRequest instance configured with the specified parameters
+     */
     private ListSecretsRequest buildRequest(String vaultId, String compartmentId, @Nullable String page) {
         ListSecretsRequest.Builder request = ListSecretsRequest.builder()
-                .vaultId(vaultId)
-                .compartmentId(compartmentId)
-                .lifecycleState(SecretSummary.LifecycleState.Active);
+            .vaultId(vaultId)
+            .compartmentId(compartmentId)
+            .lifecycleState(SecretSummary.LifecycleState.Active);
         if (page != null) {
             request.page(page);
         }
         return request.build();
     }
 
-    private byte[] getSecretValue(String secretOcid) {
+    /**
+     * Get the secret bundle. This is retryable because it will occasionally fail, and during bootstrap
+     * we should not fail. Since we just got the secret id from the listSecrets endpoint, we can
+     * presume it is likely a transient failure.
+     *
+     * @param secretOcid the ocid of the secret to fetch
+     * @return the decoded content of the secret byndle
+     */
+    @Retryable(
+        attempts = "${oci.vault.config.retry.attempts:3}",
+        delay = "${oci.vault.config.refresh.retry.delay:1s}"
+    )
+    byte[] getSecretValue(String secretOcid) {
         GetSecretBundleRequest getSecretBundleRequest = GetSecretBundleRequest
-                .builder()
-                .secretId(secretOcid)
-                .stage(GetSecretBundleRequest.Stage.Current)
-                .build();
+            .builder()
+            .secretId(secretOcid)
+            .stage(GetSecretBundleRequest.Stage.Current)
+            .build();
 
         GetSecretBundleResponse getSecretBundleResponse = secretsClient.
-                getSecretBundle(getSecretBundleRequest);
+            getSecretBundle(getSecretBundleRequest);
 
         Base64SecretBundleContentDetails base64SecretBundleContentDetails =
-                (Base64SecretBundleContentDetails) getSecretBundleResponse.
-                        getSecretBundle().getSecretBundleContent();
+            (Base64SecretBundleContentDetails) getSecretBundleResponse.
+                getSecretBundle().getSecretBundleContent();
 
         return Base64.getDecoder().decode(base64SecretBundleContentDetails.getContent());
     }

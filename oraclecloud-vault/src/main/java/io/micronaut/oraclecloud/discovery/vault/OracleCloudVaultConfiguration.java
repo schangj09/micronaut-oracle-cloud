@@ -125,8 +125,8 @@ public class OracleCloudVaultConfiguration {
         }
 
         /**
-         * Sets the includes array of regex patterns to match on secret names. These will be
-         * included unless there is a match on an exclude pattern.
+         * Sets the includes array of regex patterns to match on secret names. Secrets that match these
+         * patterns will be included, except those which also match an exclude pattern.
          * If not provided, then all secrets are included.
          *
          * @param includes the includes array
@@ -145,8 +145,8 @@ public class OracleCloudVaultConfiguration {
         }
 
         /**
-         * Sets the excludes array of regex patterns to match on secret names. These will always be
-         * excluded, even if there is a match on include pattern.
+         * Sets the excludes array of regex patterns to match on secret names. Secrets that match these
+         * will always be excluded, even if there is a match on include pattern.
          * If not provided, then no secrets are explicitly excluded.
          *
          * @param excludes the excludes array

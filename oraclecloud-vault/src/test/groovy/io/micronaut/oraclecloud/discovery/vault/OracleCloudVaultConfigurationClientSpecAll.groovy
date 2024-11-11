@@ -22,6 +22,7 @@ import spock.lang.Specification
  */
 @MicronautTest(contextBuilder = MyContextBuilder)
 class OracleCloudVaultConfigurationClientSpecAll extends Specification {
+
     public static final String VAULT_OCID = "vault1"
     public static final String COMPARTMENT_OCID = "compartment1"
 
@@ -79,6 +80,8 @@ class OracleCloudVaultConfigurationClientSpecAll extends Specification {
             properties([
                     'micronaut.config-client.enabled': true,
                     'oci.vault.config.enabled'       : true,
+                    'oci.vault.config.retry.attempts': 2,
+                    'oci.vault.config.retry.delay'   : '50ms',
                     'oci.vault.vaults'               : [
                             ['ocid'            : VAULT_OCID,
                              'compartment-ocid': COMPARTMENT_OCID]

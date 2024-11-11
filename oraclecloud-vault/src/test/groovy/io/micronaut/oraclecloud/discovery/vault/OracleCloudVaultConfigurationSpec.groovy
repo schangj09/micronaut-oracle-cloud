@@ -11,6 +11,8 @@ import org.reactivestreams.Publisher
 import reactor.core.publisher.Flux
 import spock.lang.Specification
 
+import java.time.Duration
+
 class OracleCloudVaultConfigurationSpec extends Specification {
 
     void "it parses configuration"() {
@@ -18,6 +20,8 @@ class OracleCloudVaultConfigurationSpec extends Specification {
                 'spec.name'                      : 'it parses configuration',
                 'micronaut.config-client.enabled': true,
                 'oci.vault.config.enabled'       : true,
+                'oci.vault.config.retry.attempts': 2,
+                'oci.vault.config.retry.delay'   : '200ms',
                 'oci.vault.vaults'               : [
                         ['ocid'            : 'ocid1.vault.oc1.phx....',
                          'compartment-ocid': 'ocid1.compartment.oc1....',
@@ -28,6 +32,8 @@ class OracleCloudVaultConfigurationSpec extends Specification {
         OracleCloudVaultConfiguration config = ctx.getBean(OracleCloudVaultConfiguration)
 
         expect:
+        2 == config.retryAttempts
+        Duration.ofMillis(200) == config.retryDelay
         1 == config.vaults.size()
         "ocid1.vault.oc1.phx...." == config.vaults[0].ocid
         "ocid1.compartment.oc1...." == config.vaults[0].compartmentOcid

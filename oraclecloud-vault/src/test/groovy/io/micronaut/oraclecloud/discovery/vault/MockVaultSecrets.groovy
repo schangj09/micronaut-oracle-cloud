@@ -43,6 +43,7 @@ import com.oracle.bmc.vault.responses.ScheduleSecretVersionDeletionResponse
 import com.oracle.bmc.vault.responses.UpdateSecretResponse
 import com.oracle.bmc.workrequests.WorkRequest
 import groovy.transform.Canonical
+import io.micronaut.http.client.exceptions.HttpClientException
 
 /**
  * Mock provider for a Vaults and Secrets client. A list of secrets are provided and the
@@ -96,9 +97,14 @@ class MockVaultSecrets {
      * @param getSecretBundleRequest Request object containing the secret ID.
      * @return A GetSecretBundleResponse object containing the retrieved secret bundle.
      */
+    def cnt = 0
     GetSecretBundleResponse getSecretsBundle(GetSecretBundleRequest getSecretBundleRequest) {
         def id = getSecretBundleRequest.getSecretId()
         def s = secretsList.find { it.id == id }
+        cnt++
+        if (cnt%5 == 3 || cnt%5 == 4) {
+            throw new HttpClientException("test exception on Secrets.getSecretsBundle")
+        }
         if (s == null) {
             return GetSecretBundleResponse.builder().__httpStatusCode__(404).build()
         }

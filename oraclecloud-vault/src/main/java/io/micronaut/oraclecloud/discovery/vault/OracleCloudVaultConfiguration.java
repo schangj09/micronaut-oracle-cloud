@@ -15,6 +15,7 @@
  */
 package io.micronaut.oraclecloud.discovery.vault;
 
+import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -22,6 +23,7 @@ import java.util.List;
 import io.micronaut.context.annotation.BootstrapContextCompatible;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.context.annotation.Property;
 import io.micronaut.core.annotation.NonNull;
 import io.micronaut.core.util.StringUtils;
 import io.micronaut.discovery.config.ConfigDiscoveryConfiguration;
@@ -42,6 +44,12 @@ public class OracleCloudVaultConfiguration {
     private final OracleCloudVaultClientDiscoveryConfiguration oracleCloudVaultClientDiscoveryConfiguration = new OracleCloudVaultClientDiscoveryConfiguration();
 
     private List<OracleCloudVault> vaults = Collections.emptyList();
+
+    @Property(name = PREFIX + ".config.retry.attempts", defaultValue = "3")
+    private int retryAttempts;
+
+    @Property(name = PREFIX + ".config.retry.delay", defaultValue = "1s")
+    private Duration retryDelay;
 
     /**
      * @return The discovery service configuration
@@ -68,6 +76,45 @@ public class OracleCloudVaultConfiguration {
         if (vaults != null) {
             this.vaults = vaults;
         }
+    }
+
+    /**
+     * Returns the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
+     *
+     * @return the number of retry attempts
+     */
+    public int getRetryAttempts() {
+        return retryAttempts;
+    }
+
+    /**
+     * Sets the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
+     *
+     * @param retryAttempts the number of retry attempts
+     */
+    public void setRetryAttempts(int retryAttempts) {
+        this.retryAttempts = retryAttempts;
+    }
+
+    /**
+     * Returns the delay between retries retrieving a secret from the Oracle Cloud Vault.
+     *
+     * @return the duration of time to wait before attempting another connection
+     */
+    @NonNull
+    public Duration getRetryDelay() {
+        return retryDelay;
+    }
+
+    /**
+     * Sets the delay between retries retrieving a secret from the Oracle Cloud Vault.
+     * <p>
+     * This value determines how long the system waits before attempting another connection after a failed attempt.
+     *
+     * @param retryDelay the duration of time to wait before attempting another connection
+     */
+    public void setRetryDelay(@NonNull Duration retryDelay) {
+        this.retryDelay = retryDelay;
     }
 
     /**

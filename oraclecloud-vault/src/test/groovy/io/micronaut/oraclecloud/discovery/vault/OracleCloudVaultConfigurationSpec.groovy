@@ -20,8 +20,8 @@ class OracleCloudVaultConfigurationSpec extends Specification {
                 'spec.name'                      : 'it parses configuration',
                 'micronaut.config-client.enabled': true,
                 'oci.vault.config.enabled'       : true,
-                'oci.vault.config.retry.attempts': 2,
-                'oci.vault.config.retry.delay'   : '200ms',
+                'oci.vault.config.retry-attempts': 2,
+                'oci.vault.config.retry-delay'   : '200ms',
                 'oci.vault.vaults'               : [
                         ['ocid'            : 'ocid1.vault.oc1.phx....',
                          'compartment-ocid': 'ocid1.compartment.oc1....',
@@ -32,8 +32,8 @@ class OracleCloudVaultConfigurationSpec extends Specification {
         OracleCloudVaultConfiguration config = ctx.getBean(OracleCloudVaultConfiguration)
 
         expect:
-        2 == config.retryAttempts
-        Duration.ofMillis(200) == config.retryDelay
+        2 == config.discoveryConfiguration.retryAttempts
+        Duration.ofMillis(200) == config.discoveryConfiguration.retryDelay
         1 == config.vaults.size()
         "ocid1.vault.oc1.phx...." == config.vaults[0].ocid
         "ocid1.compartment.oc1...." == config.vaults[0].compartmentOcid
@@ -78,8 +78,8 @@ class OracleCloudVaultConfigurationSpec extends Specification {
     @Requires(property = 'spec.name', value = 'it parses configuration')
     static class MockOracleCloudVaultConfigurationClient extends OracleCloudVaultConfigurationClient {
 
-        MockOracleCloudVaultConfigurationClient() {
-            super(null, null, null, null)
+        MockOracleCloudVaultConfigurationClient(OracleCloudVaultConfiguration vaultConfiguration) {
+            super(vaultConfiguration, null, null, null)
         }
 
         @Override

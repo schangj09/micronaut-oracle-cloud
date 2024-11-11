@@ -15,6 +15,8 @@
  */
 package io.micronaut.oraclecloud.discovery.vault;
 
+import io.micronaut.core.util.ArrayUtils;
+import jakarta.inject.Inject;
 import java.time.Duration;
 import java.util.Arrays;
 import java.util.Collections;
@@ -41,15 +43,26 @@ public class OracleCloudVaultConfiguration {
 
     public static final String PREFIX = OracleCloudCoreFactory.ORACLE_CLOUD + ".vault";
 
-    private final OracleCloudVaultClientDiscoveryConfiguration oracleCloudVaultClientDiscoveryConfiguration = new OracleCloudVaultClientDiscoveryConfiguration();
+    private final OracleCloudVaultClientDiscoveryConfiguration oracleCloudVaultClientDiscoveryConfiguration;
 
     private List<OracleCloudVault> vaults = Collections.emptyList();
 
-    @Property(name = PREFIX + ".config.retry.attempts", defaultValue = "3")
-    private int retryAttempts;
+    /**
+     * Construct a vault configuration with the given discovery configuration.
+     *
+     * @param discoveryConfiguration The discovery configuration.
+     */
+    @Inject
+    public OracleCloudVaultConfiguration(OracleCloudVaultClientDiscoveryConfiguration discoveryConfiguration) {
+        this.oracleCloudVaultClientDiscoveryConfiguration = discoveryConfiguration;
+    }
 
-    @Property(name = PREFIX + ".config.retry.delay", defaultValue = "1s")
-    private Duration retryDelay;
+    /**
+     * Construct a default vault configuration.
+     */
+    public OracleCloudVaultConfiguration() {
+        this.oracleCloudVaultClientDiscoveryConfiguration = new OracleCloudVaultClientDiscoveryConfiguration();
+    }
 
     /**
      * @return The discovery service configuration
@@ -76,45 +89,6 @@ public class OracleCloudVaultConfiguration {
         if (vaults != null) {
             this.vaults = vaults;
         }
-    }
-
-    /**
-     * Returns the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
-     *
-     * @return the number of retry attempts
-     */
-    public int getRetryAttempts() {
-        return retryAttempts;
-    }
-
-    /**
-     * Sets the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
-     *
-     * @param retryAttempts the number of retry attempts
-     */
-    public void setRetryAttempts(int retryAttempts) {
-        this.retryAttempts = retryAttempts;
-    }
-
-    /**
-     * Returns the delay between retries retrieving a secret from the Oracle Cloud Vault.
-     *
-     * @return the duration of time to wait before attempting another connection
-     */
-    @NonNull
-    public Duration getRetryDelay() {
-        return retryDelay;
-    }
-
-    /**
-     * Sets the delay between retries retrieving a secret from the Oracle Cloud Vault.
-     * <p>
-     * This value determines how long the system waits before attempting another connection after a failed attempt.
-     *
-     * @param retryDelay the duration of time to wait before attempting another connection
-     */
-    public void setRetryDelay(@NonNull Duration retryDelay) {
-        this.retryDelay = retryDelay;
     }
 
     /**
@@ -182,7 +156,9 @@ public class OracleCloudVaultConfiguration {
          * @param includes the includes array
          */
         public void setIncludes(@NonNull String[] includes) {
-            this.includes = includes;
+            if (ArrayUtils.isNotEmpty(includes)) {
+                this.includes = includes;
+            }
         }
 
         /**
@@ -203,7 +179,9 @@ public class OracleCloudVaultConfiguration {
          * @param excludes the excludes array
          */
         public void setExcludes(@NonNull String[] excludes) {
-            this.excludes = excludes;
+            if (ArrayUtils.isNotEmpty(excludes)) {
+                this.excludes = excludes;
+            }
         }
 
         @Override
@@ -224,5 +202,47 @@ public class OracleCloudVaultConfiguration {
     @BootstrapContextCompatible
     public static class OracleCloudVaultClientDiscoveryConfiguration extends ConfigDiscoveryConfiguration {
         public static final String PREFIX = OracleCloudVaultConfiguration.PREFIX + "." + ConfigDiscoveryConfiguration.PREFIX;
+
+        private int retryAttempts = 3;
+        private Duration retryDelay = Duration.ofSeconds(1);
+
+        /**
+         * Returns the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
+         *
+         * @return the number of retry attempts
+         */
+        public int getRetryAttempts() {
+            return retryAttempts;
+        }
+
+        /**
+         * Sets the number of attempts to retry when retrieving a secret from the Oracle Cloud Vault.
+         *
+         * @param retryAttempts the number of retry attempts
+         */
+        public void setRetryAttempts(int retryAttempts) {
+            this.retryAttempts = retryAttempts;
+        }
+
+        /**
+         * Returns the delay between retries retrieving a secret from the Oracle Cloud Vault.
+         *
+         * @return the duration of time to wait before attempting another connection
+         */
+        @NonNull
+        public Duration getRetryDelay() {
+            return retryDelay;
+        }
+
+        /**
+         * Sets the delay between retries retrieving a secret from the Oracle Cloud Vault.
+         * <p>
+         * This value determines how long the system waits before attempting another connection after a failed attempt.
+         *
+         * @param retryDelay the duration of time to wait before attempting another connection
+         */
+        public void setRetryDelay(@NonNull Duration retryDelay) {
+            this.retryDelay = retryDelay;
+        }
     }
 }

@@ -70,6 +70,7 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
     private final ExecutorService executorService;
     private final Secrets secretsClient;
     private final Vaults vaultsClient;
+    private final OracleCloudVaultConfiguration.OracleCloudVaultClientDiscoveryConfiguration discoveryConfiguration;
 
     /**
      * Default Constructor.
@@ -81,10 +82,11 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
      */
     public OracleCloudVaultConfigurationClient(
             OracleCloudVaultConfiguration oracleCloudVaultClientConfiguration,
-            @Named(TaskExecutors.IO) @Nullable ExecutorService executorService,
+            @Named(TaskExecutors.BLOCKING) @Nullable ExecutorService executorService,
             Secrets secretsClient,
             Vaults vaultsClient) {
         this.oracleCloudVaultClientConfiguration = oracleCloudVaultClientConfiguration;
+        this.discoveryConfiguration = oracleCloudVaultClientConfiguration.getDiscoveryConfiguration();
         this.executorService = executorService;
         this.secretsClient = secretsClient;
         this.vaultsClient = vaultsClient;
@@ -233,8 +235,8 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
 
         return mono.retryWhen(
             Retry.fixedDelay(
-                oracleCloudVaultClientConfiguration.getRetryAttempts(),
-                oracleCloudVaultClientConfiguration.getRetryDelay()
+                discoveryConfiguration.getRetryAttempts(),
+                discoveryConfiguration.getRetryDelay()
             ).doAfterRetry(signal -> {
                 if (LOG.isDebugEnabled()) {
                     LOG.debug("Error occurred while retrieving secret bundle value for {}, will retry", secretOcid, signal.failure());

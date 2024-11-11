@@ -22,6 +22,8 @@ import java.util.List;
 import io.micronaut.context.annotation.BootstrapContextCompatible;
 import io.micronaut.context.annotation.ConfigurationProperties;
 import io.micronaut.context.annotation.EachProperty;
+import io.micronaut.core.annotation.NonNull;
+import io.micronaut.core.util.StringUtils;
 import io.micronaut.discovery.config.ConfigDiscoveryConfiguration;
 import io.micronaut.oraclecloud.core.OracleCloudCoreFactory;
 
@@ -76,8 +78,8 @@ public class OracleCloudVaultConfiguration {
     public static class OracleCloudVault {
         private String ocid;
         private String compartmentOcid;
-        private String[] includes = new String[0];
-        private String[] excludes = new String[0];
+        private String[] includes = StringUtils.EMPTY_STRING_ARRAY;
+        private String[] excludes = StringUtils.EMPTY_STRING_ARRAY;
 
         /**
          * The OCID of the vault that contains secrets that will be retrieved, decoded and set as config vars.
@@ -120,6 +122,7 @@ public class OracleCloudVaultConfiguration {
          *
          * @return the includes array
          */
+        @NonNull
         public String[] getIncludes() {
             return includes;
         }
@@ -131,7 +134,7 @@ public class OracleCloudVaultConfiguration {
          *
          * @param includes the includes array
          */
-        public void setIncludes(String[] includes) {
+        public void setIncludes(@NonNull String[] includes) {
             this.includes = includes;
         }
 
@@ -140,6 +143,7 @@ public class OracleCloudVaultConfiguration {
          *
          * @return the excludes array
          */
+        @NonNull
         public String[] getExcludes() {
             return excludes;
         }
@@ -151,7 +155,7 @@ public class OracleCloudVaultConfiguration {
          *
          * @param excludes the excludes array
          */
-        public void setExcludes(String[] excludes) {
+        public void setExcludes(@NonNull String[] excludes) {
             this.excludes = excludes;
         }
 

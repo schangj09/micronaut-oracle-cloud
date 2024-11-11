@@ -8,7 +8,6 @@ dependencies {
     api mn.micronaut.discovery.core
     api mn.micronaut.inject
     implementation mnDiscoveryClient.micronaut.discovery.client
-    implementation mn.micronaut.retry
     implementation mn.reactor
     testImplementation mnTest.micronaut.test.spock
 }

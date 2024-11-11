@@ -179,28 +179,36 @@ public class OracleCloudVaultConfigurationClient implements ConfigurationClient 
     private List<SecretSummary> getFilteredListOfItems(List<ListSecretsResponse> responses, OracleCloudVaultConfiguration.OracleCloudVault vault) {
         List<SecretSummary> filteredList = new ArrayList<>();
         responses.forEach(response -> response.getItems().forEach(item -> {
-            boolean matchesIncludePattern = false;
-            boolean matchesExcludePattern = false;
-
-            for (String include : vault.getIncludes()) {
-                if (item.getSecretName().matches(include)) {
-                    matchesIncludePattern = true;
-                    break;
-                }
-            }
-
-            for (String exclude : vault.getExcludes()) {
-                if (item.getSecretName().matches(exclude)) {
-                    matchesExcludePattern = true;
-                    break;
-                }
-            }
+            boolean matchesIncludePattern = doesMatchIncludePattern(vault, item);
+            boolean matchesExcludePattern = doesMatchExcludePattern(vault, item);
 
             if ((vault.getIncludes().length == 0 || matchesIncludePattern) && !matchesExcludePattern) {
                 filteredList.add(item);
             }
         }));
         return filteredList;
+    }
+
+    private static boolean doesMatchExcludePattern(OracleCloudVaultConfiguration.OracleCloudVault vault, SecretSummary item) {
+        boolean matchesExcludePattern = false;
+        for (String exclude : vault.getExcludes()) {
+            if (item.getSecretName().matches(exclude)) {
+                matchesExcludePattern = true;
+                break;
+            }
+        }
+        return matchesExcludePattern;
+    }
+
+    private static boolean doesMatchIncludePattern(OracleCloudVaultConfiguration.OracleCloudVault vault, SecretSummary item) {
+        boolean matchesIncludePattern = false;
+        for (String include : vault.getIncludes()) {
+            if (item.getSecretName().matches(include)) {
+                matchesIncludePattern = true;
+                break;
+            }
+        }
+        return matchesIncludePattern;
     }
 
     /**
